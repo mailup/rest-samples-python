@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>MailUp Demo Client</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="static/css/styles.css">
+    <script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.0/dist/jquery.validate.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="static/js/scripts.js"></script>
+    <script src="static/js/timer.js"></script>
+</head>
+<body>
+    <div class="container">
+
+        <div class="bd-pageheader text-center text-sm-left">
+            <h1><strong>MailUp Demo Client</strong></h1>
+        </div>
+
+        <h3><strong>Authentication</strong></h3>
+        <div class="row">
+            <div class="col-sm-3">
+                <div class="panel panel-default auth-panel">
+                    <div class="panel-heading">Authorization code grant</div>
+                    <div class="panel-body">
+                        <div class="auth-panel-sign">
+                            <form class="form-inline" action="/" method="POST">
+                                <div class="form-group row">
+                                    <div class="col-sm-6">
+                                        <input type="submit" name="logon_by_key" class="form-control" value="Sign in to MailUp">
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-9">
+                <div class="panel panel-default auth-panel">
+                    <div class="panel-heading">Password grant</div>
+                    <div class="panel-body">
+                        <form id="auth-form" action="/" method="POST">
+                            <div class="form-group">
+                                <label for="username">Username:</label>
+                                <input type="text" name="username" id="username" class="form-control" placeholder="Input your MailUp username">
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password:</label>
+                                <input type="password" name="password" id="password" class="form-control" placeholder="Input your MailUp password">
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-5">
+                                    <input type="submit" name="logon_by_password" class="form-control btn btn-success" value="Sign in to MailUp with username and password">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-10">
+                <div class="example-body">
+                    <div><b>{{ authorization_status }}</b></div>
+                    {% if access_token %}
+                        <div><b>Token</b>: {{ access_token }} </div>
+                    {% endif %}
+                </div>
+                {% if access_token %}
+                    <span id="unix-time">{{ token_time }}</span>
+                    <div><b>Expires in</b>: <span id="token-time"></span></div>
+                {% endif %}
+            </div>
+            {% if access_token %}
+                <div class="col-sm-2 right">
+                    <form class="form-inline" action="/" method="POST">
+                        <input type="submit" name="refresh_token" class="form-control btn btn-success" value="Refresh token">
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+
+        <h3><strong>Custom method call</strong></h3>
+        <div class = "panel panel-default">
+            <div class="panel-body">
+                <form action="/" method="POST">
+                    <div class="form-group row">
+                        <div class="col-xs-2">
+                            <label for="method">Verb</label>
+                            <select id="method" name="method" class="form-control">
+                                <option selected value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-2">
+                            <label for="content_type">Content-Type</label>
+                            <select id="content_type" name="content_type" class="form-control">
+                                <option selected value="JSON">JSON</option>
+                                <option value="XML">XML</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-2">
+                            <label for="url">Endpoint</label>
+                            <select id="url" name="url" class="form-control">
+                                {% for endpoint in endpoints.keys() %}
+                                    <option value="{{ endpoints[endpoint] }}">{{ endpoint }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-xs-6">
+                            <label for="endpoint">Path</label>
+                            <input type="text" id="endpoint" name="endpoint" value="/Console/Authentication/Info" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="body">Body</label>
+                        <textarea id="body" class="form-control" name="body" rows="6" ></textarea>
+                    </div>
+                    <input type="submit" class="btn btn-success" name="execute_request" value="Call Method">
+                    {% if execute_result %}
+                        <p id="result-string">{{ execute_result }}</p>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <h3><strong>Run example set of calls</strong></h3>
+        {% for example in examples %}
+            <div class="panel-group">
+                <div class = "panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" href="#example-{{ loop.index }}" class="collapsed" aria-expanded="false">Run example code {{ loop.index }} - {{ example }}</a>
+                        </h4>
+                    </div>
+                    <div id="example-{{ loop.index }}" class="panel-collapse collapse" aria-expanded="true">
+                        <form class="form-inline" action="/" method="POST">
+                            <input type="submit" name="run_example_{{ loop.index }}" class="form-control btn btn-success" id="example" value="Run example code {{ loop.index }} - {{ example }}">
+                        </form>
+                        {% if example_results[loop.index - 1] %}
+                            {% for example in example_results[loop.index - 1] %}
+                                <div class="spoiler-wrap disabled">
+                                    <div class="spoiler-head">
+                                        {{ example['text'] }}
+                                    </div>
+                                    <div class="spoiler-body" style="display: none;">
+                                        <div class="form-group row">
+                                            <div class="col-xs-2">
+                                                <label>Verb</label>
+                                                <span class="form-control example-body">{{ example['method'] }}</span>
+                                            </div>
+                                            <div class="col-xs-2">
+                                                <label>Content-Type</label>
+                                                <span class="form-control example-body">{{ example['content_type'] }}</span>
+                                            </div>
+                                            <div class="col-xs-2">
+                                                <label>Endpoint</label>
+                                                <span class="form-control example-body">{{ example['url'] }}</span>
+                                            </div>
+                                            <div class="col-xs-6">
+                                                <label>Path</label>
+                                                <span class="form-control example-body">{{ example['endpoint'] }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Body</label>
+                                            <div class="form-control example-body">{{ example['req_body'] }}</div>
+                                        </div>
+                                        <div class="well">
+                                            <div class="form-group example-body">
+                                                <label>Response</label>
+                                                <div>{{ example['res_body'] }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            {% if example_errors[loop.index - 1] %}
+                                <div class="error-answer">
+                                    <strong>
+                                        Error code: {{ example_errors[loop.index - 1]['code'] }}<br/>
+                                        Message: {{ example_errors[loop.index - 1]['message'] }}<br/>
+                                        URL: {{ example_errors[loop.index - 1]['url'] }}
+                                    </strong>
+                                </div>
+                            {% else: %}
+                                <div class="successfully-answer"><strong>Example methods completed successfully</strong></div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

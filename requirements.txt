@@ -1,0 +1,4 @@
+flask
+pycurl
+Flask-Assets
+requests
